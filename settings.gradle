@@ -1,0 +1,2 @@
+include ':app'
+rootProject.name = "prd_gr2"
