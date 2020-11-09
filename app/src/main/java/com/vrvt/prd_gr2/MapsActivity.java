@@ -145,6 +145,14 @@ public class MapsActivity
                                 } catch (IOException e) {
                                     Log.e("Exception: %s", e.getMessage(), e);
                                 }
+                            } else {
+                                Log.d("MAPSACTIVITY", "Current location is null. Using defaults.");
+                                Log.e("MAPSACTIVITY", "Exception: %s", task.getException());
+                                mMap.moveCamera(CameraUpdateFactory
+                                        .newLatLngZoom(defaultLocation, DEFAULT_ZOOM));
+                                mMap.getUiSettings().setMyLocationButtonEnabled(false);
+
+                                addMarkersToDefaultLocation();
                             }
                         } else {
                             Log.d("MAPSACTIVITY", "Current location is null. Using defaults.");
@@ -152,11 +160,28 @@ public class MapsActivity
                             mMap.moveCamera(CameraUpdateFactory
                                     .newLatLngZoom(defaultLocation, DEFAULT_ZOOM));
                             mMap.getUiSettings().setMyLocationButtonEnabled(false);
+
+                            addMarkersToDefaultLocation();
                         }
                     }
                 });
             }
         } catch (SecurityException e)  {
+            Log.e("Exception: %s", e.getMessage(), e);
+        }
+    }
+
+    private void addMarkersToDefaultLocation() {
+        try {
+            Geocoder geocoder = new Geocoder(MapsActivity.this, Locale.getDefault());
+            List<Address> addresses = geocoder.getFromLocation(
+                    defaultLocation.latitude,
+                    defaultLocation.longitude,
+                    1
+            );
+            String cityName = addresses.get(0).getLocality();
+            addNearbyPlaces(cityName);
+        } catch (IOException e) {
             Log.e("Exception: %s", e.getMessage(), e);
         }
     }
