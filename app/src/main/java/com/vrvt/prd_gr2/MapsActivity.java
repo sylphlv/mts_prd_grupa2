@@ -405,21 +405,23 @@ public class MapsActivity
             public void onClick(DialogInterface dialog, int which) {
                 // The "which" argument contains the position of the selected item.
                 LatLng markerLatLng = likelyPlaceLatLngs[which];
-                String markerSnippet = likelyPlaceAddresses[which];
-                if (likelyPlaceAttributions[which] != null) {
-                    markerSnippet = markerSnippet + "\n" + likelyPlaceAttributions[which];
-                }
 
-                // Add a marker for the selected place, with an info window
-                // showing information about that place.
-                map.addMarker(new MarkerOptions()
-                        .title(likelyPlaceNames[which])
-                        .position(markerLatLng)
-                        .snippet(markerSnippet));
-
-                // Position the map's camera at the location of the marker.
-                map.moveCamera(CameraUpdateFactory.newLatLngZoom(markerLatLng,
-                        DEFAULT_ZOOM));
+                startActivity(new Intent(MapsActivity.this, ArActivity.class));
+//                String markerSnippet = likelyPlaceAddresses[which];
+//                if (likelyPlaceAttributions[which] != null) {
+//                    markerSnippet = markerSnippet + "\n" + likelyPlaceAttributions[which];
+//                }
+//
+//                // Add a marker for the selected place, with an info window
+//                // showing information about that place.
+//                map.addMarker(new MarkerOptions()
+//                        .title(likelyPlaceNames[which])
+//                        .position(markerLatLng)
+//                        .snippet(markerSnippet));
+//
+//                // Position the map's camera at the location of the marker.
+//                map.moveCamera(CameraUpdateFactory.newLatLngZoom(markerLatLng,
+//                        DEFAULT_ZOOM));
             }
         };
 
