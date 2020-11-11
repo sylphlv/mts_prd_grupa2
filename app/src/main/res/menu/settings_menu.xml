@@ -5,4 +5,6 @@
   <item android:id="@+id/depth_settings" android:title="Depth API"/>
   <item android:id="@+id/instant_placement_settings"
       android:title="Instant Placement"/>
+  <item android:id="@+id/view_marker"
+      android:title="View Object Marker"/>
 </menu>

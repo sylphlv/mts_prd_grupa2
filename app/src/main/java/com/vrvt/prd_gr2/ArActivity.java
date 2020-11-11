@@ -17,6 +17,7 @@
 package com.vrvt.prd_gr2;
 
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.res.Resources;
 import android.media.Image;
 import android.opengl.GLSurfaceView;
@@ -33,6 +34,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.android.gms.maps.model.LatLng;
 import com.google.ar.core.Anchor;
 import com.google.ar.core.ArCoreApk;
 import com.google.ar.core.Camera;
@@ -162,6 +164,8 @@ public class ArActivity extends AppCompatActivity implements SampleRender.Render
   private final float[] worldLightDirection = {0.0f, 0.0f, 0.0f, 0.0f};
   private final float[] viewLightDirection = new float[4]; // view x world light direction
 
+  private Texture virtualObjectAlbedoTexture;
+
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -200,6 +204,24 @@ public class ArActivity extends AppCompatActivity implements SampleRender.Render
       return true;
     } else if (item.getItemId() == R.id.instant_placement_settings) {
       launchInstantPlacementSettingsMenuDialog();
+      return true;
+    } else if (item.getItemId() == R.id.view_marker) {
+      Intent i = new Intent(ArActivity.this, MapsActivity.class);
+      Bundle extras = getIntent().getExtras();
+
+      if (extras != null) {
+        LatLng markerLatLng = (LatLng)extras.get("markerLatLng");
+        i.putExtra("markerLatLng", markerLatLng);
+
+        String markerName = (String)extras.get("markerName");
+        i.putExtra("markerName", markerName);
+
+        String markerAddress = (String)extras.get("markerAddress");
+        i.putExtra("markerAddress", markerAddress);
+      }
+
+      startActivity(i);
+
       return true;
     }
     return false;
@@ -347,28 +369,54 @@ public class ArActivity extends AppCompatActivity implements SampleRender.Render
           new Mesh(
               render, Mesh.PrimitiveMode.POINTS, /*indexBuffer=*/ null, pointCloudVertexBuffers);
 
-      // Virtual object to render (ARCore pawn)
-      Texture virtualObjectAlbedoTexture =
-          Texture.createFromAsset(
-              render,
-              "models/pawn_albedo.png",
-              Texture.WrapMode.CLAMP_TO_EDGE,
-              Texture.ColorFormat.SRGB);
-      Texture virtualObjectPbrTexture =
-          Texture.createFromAsset(
-              render,
-              "models/pawn_roughness_metallic_ao.png",
-              Texture.WrapMode.CLAMP_TO_EDGE,
-              Texture.ColorFormat.LINEAR);
-      virtualObjectMesh = Mesh.createFromAsset(render, "models/pawn.obj");
-      virtualObjectShader =
-          Shader.createFromAssets(
-                  render,
-                  "shaders/environmental_hdr.vert",
-                  "shaders/environmental_hdr.frag",
-                  /*defines=*/ null)
-              .setTexture("u_AlbedoTexture", virtualObjectAlbedoTexture)
-              .setTexture("u_RoughnessMetallicAmbientOcclusionTexture", virtualObjectPbrTexture);
+      Bundle extras = getIntent().getExtras();
+      String markerName = "";
+
+      if (extras != null) {
+        markerName = extras.getString("markerName");
+      }
+
+      switch (markerName) {
+        case "Valmiera St. Simon Church":
+          virtualObjectAlbedoTexture =
+                  Texture.createFromAsset(
+                          render,
+                          "models/church.jpg",
+                          Texture.WrapMode.CLAMP_TO_EDGE,
+                          Texture.ColorFormat.SRGB);
+          virtualObjectMesh = Mesh.createFromAsset(render, "models/church.obj");
+          virtualObjectShader =
+                  Shader.createFromAssets(
+                          render,
+                          "shaders/environmental_hdr.vert",
+                          "shaders/environmental_hdr.frag",
+                          /*defines=*/ null)
+                          .setTexture("u_AlbedoTexture", virtualObjectAlbedoTexture);
+          break;
+        default:
+          virtualObjectAlbedoTexture =
+                  Texture.createFromAsset(
+                          render,
+                          "models/pawn_albedo.png",
+                          Texture.WrapMode.CLAMP_TO_EDGE,
+                          Texture.ColorFormat.SRGB);
+          Texture virtualObjectPbrTexture =
+                  Texture.createFromAsset(
+                          render,
+                          "models/pawn_roughness_metallic_ao.png",
+                          Texture.WrapMode.CLAMP_TO_EDGE,
+                          Texture.ColorFormat.LINEAR);
+          virtualObjectMesh = Mesh.createFromAsset(render, "models/pawn.obj");
+          virtualObjectShader =
+                  Shader.createFromAssets(
+                          render,
+                          "shaders/environmental_hdr.vert",
+                          "shaders/environmental_hdr.frag",
+                          /*defines=*/ null)
+                          .setTexture("u_AlbedoTexture", virtualObjectAlbedoTexture)
+                          .setTexture("u_RoughnessMetallicAmbientOcclusionTexture", virtualObjectPbrTexture);
+          break;
+      }
     } catch (IOException e) {
       Log.e(TAG, "Failed to read a required asset file", e);
       messageSnackbarHelper.showError(this, "Failed to read a required asset file: " + e);
@@ -562,7 +610,7 @@ public class ArActivity extends AppCompatActivity implements SampleRender.Render
             || (trackable instanceof InstantPlacementPoint)) {
           // Cap the number of objects created. This avoids overloading both the
           // rendering system and ARCore.
-          if (anchors.size() >= 20) {
+          if (anchors.size() >= 1) {
             anchors.get(0).detach();
             anchors.remove(0);
           }

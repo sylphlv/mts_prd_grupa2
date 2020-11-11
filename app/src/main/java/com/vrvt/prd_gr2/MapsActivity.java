@@ -90,10 +90,9 @@ public class MapsActivity
     // [END maps_current_place_state_keys]
 
     // Used for selecting the current place.
-    private static final int M_MAX_ENTRIES = 5;
+    private static final int M_MAX_ENTRIES = 15;
     private String[] likelyPlaceNames;
     private String[] likelyPlaceAddresses;
-    private List[] likelyPlaceAttributions;
     private LatLng[] likelyPlaceLatLngs;
 
     // [START maps_current_place_on_create]
@@ -238,6 +237,19 @@ public class MapsActivity
                 locationResult.addOnCompleteListener(this, new OnCompleteListener<Location>() {
                     @Override
                     public void onComplete(@NonNull Task<Location> task) {
+                        Bundle extras = getIntent().getExtras();
+
+                        if (extras != null) {
+                            LatLng location = (LatLng)extras.get("markerLatLng");
+                            map.moveCamera(
+                                    CameraUpdateFactory.newLatLngZoom((LatLng)extras.get("markerLatLng"), DEFAULT_ZOOM * 2)
+                            );
+
+                            addMarkersByLatLng(location.latitude, location.longitude);
+
+                            return;
+                        }
+
                         if (task.isSuccessful()) {
                             // Set the map's camera position to the current location of the device.
                             lastKnownLocation = task.getResult();
@@ -342,32 +354,29 @@ public class MapsActivity
                         FindCurrentPlaceResponse likelyPlaces = task.getResult();
 
                         // Set the count, handling cases where less than 5 entries are returned.
-                        int count;
-                        if (likelyPlaces.getPlaceLikelihoods().size() < M_MAX_ENTRIES) {
-                            count = likelyPlaces.getPlaceLikelihoods().size();
-                        } else {
-                            count = M_MAX_ENTRIES;
-                        }
-
-                        int i = 0;
-                        likelyPlaceNames = new String[count];
-                        likelyPlaceAddresses = new String[count];
-                        likelyPlaceAttributions = new List[count];
-                        likelyPlaceLatLngs = new LatLng[count];
-
-                        for (PlaceLikelihood placeLikelihood : likelyPlaces.getPlaceLikelihoods()) {
-                            // Build a list of likely places to show the user.
-                            likelyPlaceNames[i] = placeLikelihood.getPlace().getName();
-                            likelyPlaceAddresses[i] = placeLikelihood.getPlace().getAddress();
-                            likelyPlaceAttributions[i] = placeLikelihood.getPlace()
-                                    .getAttributions();
-                            likelyPlaceLatLngs[i] = placeLikelihood.getPlace().getLatLng();
-
-                            i++;
-                            if (i > (count - 1)) {
-                                break;
-                            }
-                        }
+//                        int count;
+//                        if (likelyPlaces.getPlaceLikelihoods().size() < M_MAX_ENTRIES) {
+//                            count = likelyPlaces.getPlaceLikelihoods().size();
+//                        } else {
+//                            count = M_MAX_ENTRIES;
+//                        }
+//
+//                        int i = 0;
+//                        likelyPlaceNames = new String[count];
+//                        likelyPlaceAddresses = new String[count];
+//                        likelyPlaceLatLngs = new LatLng[count];
+//
+//                        for (PlaceLikelihood placeLikelihood : likelyPlaces.getPlaceLikelihoods()) {
+//                            // Build a list of likely places to show the user.
+//                            likelyPlaceNames[i] = placeLikelihood.getPlace().getName();
+//                            likelyPlaceAddresses[i] = placeLikelihood.getPlace().getAddress();
+//                            likelyPlaceLatLngs[i] = placeLikelihood.getPlace().getLatLng();
+//
+//                            i++;
+//                            if (i > (count - 1)) {
+//                                break;
+//                            }
+//                        }
 
                         // Show a dialog offering the user the list of likely places, and add a
                         // marker at the selected place.
@@ -406,11 +415,12 @@ public class MapsActivity
                 // The "which" argument contains the position of the selected item.
                 LatLng markerLatLng = likelyPlaceLatLngs[which];
 
-                startActivity(new Intent(MapsActivity.this, ArActivity.class));
+                Intent i = new Intent(MapsActivity.this, ArActivity.class);
+                i.putExtra("markerLatLng", markerLatLng);
+                i.putExtra("markerName", likelyPlaceNames[which]);
+                i.putExtra("markerAddress", likelyPlaceAddresses[which]);
+                startActivity(i);
 //                String markerSnippet = likelyPlaceAddresses[which];
-//                if (likelyPlaceAttributions[which] != null) {
-//                    markerSnippet = markerSnippet + "\n" + likelyPlaceAttributions[which];
-//                }
 //
 //                // Add a marker for the selected place, with an info window
 //                // showing information about that place.
@@ -513,6 +523,11 @@ public class MapsActivity
         try {
             JSONArray results = response.getJSONArray("results");
             JSONObject visitedPlaces = getVisitedPlaces();
+            int count = Math.min(M_MAX_ENTRIES, results.length());
+            int likelyPlaceCount = 0;
+            likelyPlaceNames = new String[count];
+            likelyPlaceAddresses = new String[count];
+            likelyPlaceLatLngs = new LatLng[count];
 
             for (int i = 0; i < results.length(); i++) {
                 // Get current json object
@@ -539,6 +554,14 @@ public class MapsActivity
                 }
 
                 map.addMarker(marker);
+
+                if (likelyPlaceCount < count) {
+                    likelyPlaceCount++;
+                    // Build a list of likely places to show the user.
+                    likelyPlaceNames[i] = place.getString("name");
+                    likelyPlaceAddresses[i] = place.getString("formatted_address");
+                    likelyPlaceLatLngs[i] = newMarker;
+                }
             }
         } catch (Exception e) {
             Log.e(TAG, e.getMessage());
