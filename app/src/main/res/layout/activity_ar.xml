@@ -35,4 +35,16 @@
       android:src="@drawable/ic_settings"
       android:background="@android:color/transparent"/>
 
+  <TextView
+      android:id="@+id/location"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_alignParentLeft="true"
+      android:layout_alignParentTop="true"
+      android:layout_marginLeft="35dp"
+      android:layout_marginTop="35dp"
+      android:textColor="@color/white"
+      android:textColorHint="@color/white"
+      android:textSize="20sp" />
+
 </RelativeLayout>
